@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Birthday Manager</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+}
+
+input, button {
+    padding: 8px;
+    margin: 5px;
+    border-radius: 8px;
+    border: none;
+}
+
+button {
+    cursor: pointer;
+}
+
+.card {
+    background: #1e293b;
+    margin: 10px;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.countdown {
+    font-size: 20px;
+    margin-top: 10px;
+}
+
+#celebration {
+    display: none;
+    font-size: 40px;
+    margin-top: 20px;
+    animation: pop 1s infinite alternate;
+}
+
+@keyframes pop {
+    from { transform: scale(1); }
+    to { transform: scale(1.2); }
+}
+
+.balloon {
+    position: fixed;
+    bottom: -100px;
+    width: 30px;
+    height: 50px;
+    border-radius: 50%;
+    animation: float 5s linear infinite;
+}
+
+@keyframes float {
+    from { transform: translateY(0); }
+    to { transform: translateY(-120vh); }
+}
+</style>
+
+</head>
+<body>
+
+<h1>🎂 Birthday Manager 🎂</h1>
+
+<input type="text" id="name" placeholder="Name (Mom, Dad, Me)">
+<input type="date" id="date">
+<button onclick="addBirthday()">Add</button>
+
+<div id="list"></div>
+
+<div id="celebration">🎉 HAPPY BIRTHDAY! 🎉</div>
+
+<script>
+let birthdays = JSON.parse(localStorage.getItem("birthdays")) || [];
+
+function saveData() {
+    localStorage.setItem("birthdays", JSON.stringify(birthdays));
+}
+
+function addBirthday() {
+    const name = document.getElementById("name").value;
+    const date = document.getElementById("date").value;
+
+    if (!name || !date) return;
+
+    birthdays.push({ name, date });
+    saveData();
+    render();
+}
+
+function deleteBirthday(index) {
+    birthdays.splice(index, 1);
+    saveData();
+    render();
+}
+
+function editBirthday(index) {
+    const newName = prompt("Edit name:", birthdays[index].name);
+    const newDate = prompt("Edit date (YYYY-MM-DD):", birthdays[index].date);
+
+    if (newName && newDate) {
+        birthdays[index] = { name: newName, date: newDate };
+        saveData();
+        render();
+    }
+}
+
+function createBalloons() {
+    for (let i = 0; i < 20; i++) {
+        const b = document.createElement("div");
+        b.className = "balloon";
+        b.style.left = Math.random() * 100 + "vw";
+        b.style.background = `hsl(${Math.random()*360},70%,50%)`;
+        b.style.animationDuration = (3 + Math.random()*3) + "s";
+        document.body.appendChild(b);
+    }
+}
+
+function getCountdown(dateStr) {
+    const now = new Date();
+    let bday = new Date(dateStr);
+
+    bday.setFullYear(now.getFullYear());
+    if (bday < now) bday.setFullYear(now.getFullYear() + 1);
+
+    const diff = bday - now;
+
+    if (diff <= 0) return "🎉 TODAY 🎉";
+
+    const d = Math.floor(diff / (1000*60*60*24));
+    const h = Math.floor((diff/(1000*60*60))%24);
+    const m = Math.floor((diff/(1000*60))%60);
+    const s = Math.floor((diff/1000)%60);
+
+    return `${d}d ${h}h ${m}m ${s}s`;
+}
+
+function render() {
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    birthdays.forEach((b, i) => {
+        const div = document.createElement("div");
+        div.className = "card";
+
+        const countdown = getCountdown(b.date);
+
+        if (countdown === "🎉 TODAY 🎉") {
+            document.getElementById("celebration").style.display = "block";
+            createBalloons();
+        }
+
+        div.innerHTML = `
+            <h2>${b.name}</h2>
+            <div class="countdown">${countdown}</div>
+            <button onclick="editBirthday(${i})">Edit</button>
+            <button onclick="deleteBirthday(${i})">Delete</button>
+        `;
+
+        list.appendChild(div);
+    });
+}
+
+setInterval(render, 1000);
+render();
+</script>
+
+</body>
+  </html>
